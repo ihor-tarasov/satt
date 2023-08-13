@@ -54,23 +54,3 @@ where
         }))
     }
 }
-
-pub fn zero_or_more<T, P>(p: P) -> impl Parse<Vec<T>>
-where
-    P: Parse<T>,
-{
-    p.fold(
-        || Vec::new(),
-        |mut v, t| {
-            v.push(t);
-            v
-        },
-    )
-}
-
-pub fn one_or_more<T, P>(p: P) -> impl Parse<Vec<T>>
-where
-    P: Parse<T>,
-{
-    zero_or_more(p).filter(|v| !v.is_empty())
-}

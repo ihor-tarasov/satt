@@ -1,25 +1,24 @@
-use std::{io::Write, rc::Rc};
-use tpc::{combs::Parse, parser::parser, Input};
+use satt::{
+    parser::{parse, parser},
+    Input,
+};
+
+mod line_reader;
+
+use line_reader::LineReader;
 
 fn main() {
     let parser = parser();
-    let mut line = Rc::new(String::new());
+    let mut reader = LineReader::new();
     loop {
-        Rc::make_mut(&mut line).clear();
-        print!("-> ");
-        std::io::stdout().flush().unwrap();
-        std::io::stdin().read_line(Rc::make_mut(&mut line)).unwrap();
-        let input = Input::new(line.clone(), 0);
-        let result = parser.parse(input);
-        match result {
-            Ok(data) => match data {
-                Some(data) => match data.token.value.eval() {
-                    Ok(value) => println!("{value}"),
-                    Err(error) => println!("Runtime error: {}", error.messgae),
-                },
-                None => println!("None returned."),
+        let line = reader.read();
+        let input = Input::new(line, 0);
+        match parse(&parser, input) {
+            Ok(node) => match node.eval() {
+                Ok(value) => println!("{value}"),
+                Err(error) => println!("Runime error: {}", error.messgae),
             },
-            Err(error) => println!("Compile error: {}", error.messgae),
+            Err(error) => println!("Compilation error: {}", error.messgae),
         }
     }
 }

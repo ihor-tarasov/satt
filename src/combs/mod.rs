@@ -2,6 +2,7 @@ mod and;
 mod any;
 mod boxed;
 mod expect;
+mod expect_end;
 mod filter;
 mod filter_map;
 mod fold;
@@ -14,6 +15,7 @@ pub use and::*;
 pub use any::*;
 pub use boxed::*;
 pub use expect::*;
+pub use expect_end::*;
 pub use filter::*;
 pub use filter_map::*;
 pub use fold::*;
@@ -22,7 +24,7 @@ pub use map::*;
 pub use map_token::*;
 pub use or::*;
 
-use crate::{Input, Error};
+use crate::{Error, Input};
 
 #[derive(Debug, PartialEq)]
 pub struct Token<T> {
@@ -161,43 +163,4 @@ pub trait Parse<T> {
             phantom: core::marker::PhantomData,
         }
     }
-}
-
-pub fn digit(radix: u32) -> impl Parse<u32> {
-    any().filter_map(move |c| c.to_digit(radix))
-}
-
-pub fn integer(radix: u32) -> impl Parse<i64> {
-    digit(radix)
-        .fold(
-            || None,
-            |i, p| {
-                if let Some(i) = i {
-                    Some(i * 10 + p as i64)
-                } else {
-                    Some(p as i64)
-                }
-            },
-        )
-        .filter_map(|o| o)
-}
-
-pub fn sym(c: char) -> impl Parse<char> {
-    any().filter(move |oc| c == *oc)
-}
-
-pub fn real() -> impl Parse<f64> {
-    integer(10)
-        .and(sym('.'))
-        .and(integer(10))
-        .map(|((a, _), b)| {
-            let count = (b as f64).log10().floor() as i32 + 1;
-            a as f64 + b as f64 / 10f64.powi(count)
-        })
-}
-
-pub fn whitespaces() -> impl Parse<()> {
-    any()
-        .filter_map(|c| if c.is_whitespace() { Some(()) } else { None })
-        .fold(|| (), |_, _| ())
 }
